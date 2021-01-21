@@ -1,4 +1,4 @@
-package com.example.mediapipemultihandstrackingapp;
+package com.example.signsenseclient;
 
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.example.signsenseclient.R;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.components.CameraHelper;
@@ -22,6 +23,7 @@ import com.google.mediapipe.components.PermissionHelper;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.glutil.EglManager;
+
 import java.util.List;
 /** Main activity of MediaPipe example apps. */
 public class MainActivity extends AppCompatActivity {
@@ -69,6 +71,10 @@ public class MainActivity extends AppCompatActivity {
         // binary graphs.
         AndroidAssetUtil.initializeNativeAssetManager(this);
         eglManager = new EglManager(null);
+
+        ClientSend clientSocket = new ClientSend();
+        new Thread(clientSocket).start();
+
         processor =
                 new FrameProcessor(
                         this,
@@ -79,18 +85,25 @@ public class MainActivity extends AppCompatActivity {
         processor.getVideoSurfaceOutput().setFlipY(FLIP_FRAMES_VERTICALLY);
         processor.addPacketCallback(
                 OUTPUT_LANDMARKS_STREAM_NAME,
-                (packet) -> {
+                (packet) ->
+                {
                     Log.d(TAG, "Received multi-hand landmarks packet.");
                     List<NormalizedLandmarkList> multiHandLandmarks =
                             PacketGetter.getProtoVector(packet, NormalizedLandmarkList.parser());
+                    String logString = "[TS:"
+                            + packet.getTimestamp()
+                            + "] "
+                            + getMultiHandLandmarksDebugString(multiHandLandmarks);
                     Log.d(
                             TAG,
-                            "[TS:"
-                                    + packet.getTimestamp()
-                                    + "] "
-                                    + getMultiHandLandmarksDebugString(multiHandLandmarks));
+                            logString);
+                    if(!multiHandLandmarks.isEmpty()) {
+                        clientSocket.sendData(getFormattedLandmarkData(multiHandLandmarks));
+                    }
                 });
         PermissionHelper.checkAndRequestCameraPermissions(this);
+
+
     }
     @Override
     protected void onResume() {
@@ -177,6 +190,29 @@ public class MainActivity extends AppCompatActivity {
                                 + landmark.getZ()
                                 + ")\n";
                 ++landmarkIndex;
+            }
+            ++handIndex;
+        }
+        return multiHandLandmarksStr;
+    }
+
+    private String getFormattedLandmarkData(List<NormalizedLandmarkList> multiHandLandmarks) {
+        if (multiHandLandmarks.isEmpty()) {
+            return "No hand landmarks";
+        }
+        String multiHandLandmarksStr = "";
+        int handIndex = 0;
+        for (NormalizedLandmarkList landmarks : multiHandLandmarks) {
+            multiHandLandmarksStr +=
+                    "hand[" + handIndex + "]: ";
+            for (NormalizedLandmark landmark : landmarks.getLandmarkList()) {
+                multiHandLandmarksStr += "("
+                                + landmark.getX()
+                                + ", "
+                                + landmark.getY()
+                                + ", "
+                                + landmark.getZ()
+                                + ")";
             }
             ++handIndex;
         }

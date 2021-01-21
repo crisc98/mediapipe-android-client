@@ -1,4 +1,4 @@
-package com.example.mediapipemultihandstrackingapp;
+package com.example.signsenseclient;
 
 import org.junit.Test;
 
