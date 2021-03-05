@@ -7,13 +7,32 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import static android.content.ContentValues.TAG;
 
 public class ClientSend implements Runnable {
+    private boolean exitFlag = false;
     int port = 6071;
     InetAddress serverAddr;
     DatagramSocket udpSocket;
+    Deque<String> messageQueue = new ArrayDeque<>();
     @Override
     public void run() {
+        initOutgoing();
+        while(true) {
+            if(!messageQueue.isEmpty())
+                if(exitFlag){
+                    break;
+                }
+                else {
+                    sendData(messageQueue.pop());
+                }
+        }
+    }
+
+    private void initOutgoing(){
         try {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
             udpSocket = new DatagramSocket(port);
@@ -28,7 +47,13 @@ public class ClientSend implements Runnable {
         }
     }
 
-    public void sendData(String data){
+    private void sendData(String data){
+        try {
+            StandardCryptoUtilAES.encrypt(data);
+        }
+        catch (Exception e){
+            Log.e("Networking", e.getMessage());
+        }
         byte[] buf = data.getBytes();
         DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, port);
         try {
@@ -39,5 +64,13 @@ public class ClientSend implements Runnable {
         } catch (IOException e) {
             Log.e("Udp Send:", "IO Error:", e);
         }
+    }
+
+    public void setExitFlag(boolean value) {
+        exitFlag = value;
+    }
+
+    public void addToQueue(String data) {
+        messageQueue.addLast(data);
     }
 }
