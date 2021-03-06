@@ -10,29 +10,28 @@ import java.net.SocketException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import static android.content.ContentValues.TAG;
-
 public class ClientSend implements Runnable {
     private boolean exitFlag = false;
     int port = 6071;
     InetAddress serverAddr;
     DatagramSocket udpSocket;
     Deque<String> messageQueue = new ArrayDeque<>();
+
     @Override
     public void run() {
-        initOutgoing();
+        init();
         while(true) {
-            if(!messageQueue.isEmpty())
-                if(exitFlag){
+            if(!messageQueue.isEmpty()) {
+                if (exitFlag) {
                     break;
-                }
-                else {
+                } else {
                     sendData(messageQueue.pop());
                 }
+            }
         }
     }
 
-    private void initOutgoing(){
+    private void init(){
         try {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
             udpSocket = new DatagramSocket(port);
@@ -40,20 +39,33 @@ public class ClientSend implements Runnable {
             byte[] buf = ("INIT").getBytes();
             DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, port);
             udpSocket.send(packet);
+
+            byte[] recvBuf = new byte[1024];
+            DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
+            new Thread(() -> {
+                try {
+                    udpSocket.receive(recvPacket);
+                    String str = new String(recvPacket.getData(), 0, recvPacket.getLength());
+                    Log.d("Networking:", str);
+                }
+                catch (IOException e) {
+                    Log.e("Networking:", "IO Error:", e);
+                }
+            }).start();
         } catch (SocketException e) {
-            Log.e("Udp:", "Socket Error:", e);
+            Log.e("Networking:", "Socket Error:", e);
         } catch (IOException e) {
-            Log.e("Udp Send:", "IO Error:", e);
+            Log.e("Networking:", "IO Error:", e);
         }
     }
 
     private void sendData(String data){
-        try {
-            StandardCryptoUtilAES.encrypt(data);
-        }
-        catch (Exception e){
-            Log.e("Networking", e.getMessage());
-        }
+//        try {
+//            StandardCryptoUtilAES.encrypt(data);
+//        }
+//        catch (Exception e){
+//            Log.e("Networking", e.getMessage());
+//        }
         byte[] buf = data.getBytes();
         DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, port);
         try {
@@ -62,7 +74,7 @@ public class ClientSend implements Runnable {
                 udpSocket.send(packet);
             }
         } catch (IOException e) {
-            Log.e("Udp Send:", "IO Error:", e);
+            Log.e("Networking:", "IO Error:", e);
         }
     }
 
