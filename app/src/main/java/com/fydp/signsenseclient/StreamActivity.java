@@ -180,8 +180,6 @@ public class StreamActivity extends AppCompatActivity {
                             @Override
                             public void surfaceCreated(SurfaceHolder holder) {
                                 processor.getVideoSurfaceOutput().setSurface(holder.getSurface());
-                                Log.d(TAG, "Preview Surface Created");
-
                             }
 
                             @Override
