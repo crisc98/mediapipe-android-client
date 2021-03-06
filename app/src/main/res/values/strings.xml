@@ -1,4 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">MyMultiHandsTrackingApp</string>
+    <string name="app_name" translatable="false">SignSense</string>
     <string name="no_camera_access" translatable="false">Please grant camera permissions.</string>
+    <string name="start_button_text" translatable="false">Start</string>
 </resources>

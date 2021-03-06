@@ -1,4 +1,4 @@
-package com.example.signsenseclient;
+package com.fydp.signsenseclient;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Arrays;

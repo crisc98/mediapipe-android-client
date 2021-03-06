@@ -1,4 +1,4 @@
-package com.example.signsenseclient;
+package com.fydp.signsenseclient;
 
 import android.content.Context;
 
