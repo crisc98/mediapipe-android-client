@@ -96,12 +96,8 @@ public class MainActivity extends AppCompatActivity {
             onPacketReceived(packet, "right");
         };
         PacketCallback onPoseDataReceived = (packet) -> {
-            String toLog = getFormattedLandmarkData(landmarkLists);
-            if(!toLog.equals("")){
-                Log.d(TAG, getFormattedLandmarkData(landmarkLists));
-            }
             if(!landmarkLists.isEmpty()) {
-                clientSocket.addToQueue(getFormattedLandmarkData(landmarkLists));
+                clientSocket.addToQueue(getNetworkFormattedData(landmarkLists));
             }
             landmarkLists.clear();
         };
@@ -236,6 +232,25 @@ public class MainActivity extends AppCompatActivity {
                         + ", "
                         + landmark.getZ()
                         + ")";
+            }
+        }
+        return retStr;
+    }
+    private String getNetworkFormattedData(HashMap<String, NormalizedLandmarkList> landmarkMap) {
+        if (landmarkMap.isEmpty()) {
+            return "";
+        }
+        String retStr = "";
+        Iterator it = landmarkMap.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry el = (Map.Entry)it.next();
+            //retStr += "\n" + (String)el.getKey() + ": ";
+            for (NormalizedLandmark landmark : ((NormalizedLandmarkList)el.getValue()).getLandmarkList()) {
+                retStr += landmark.getX()
+                        + ", "
+                        + landmark.getY()
+                        + ", "
+                        + landmark.getZ();
             }
         }
         return retStr;

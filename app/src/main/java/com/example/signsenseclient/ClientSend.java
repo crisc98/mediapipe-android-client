@@ -67,10 +67,11 @@ public class ClientSend implements Runnable {
 //            Log.e("Networking", e.getMessage());
 //        }
         byte[] buf = data.getBytes();
-        DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, port);
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, port);
         try {
             if(udpSocket != null) {
                 Log.d("Networking", "Sending Packet");
+                Log.d("Networking", data);
                 udpSocket.send(packet);
             }
         } catch (IOException e) {
