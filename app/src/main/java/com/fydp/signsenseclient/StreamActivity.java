@@ -2,6 +2,8 @@ package com.fydp.signsenseclient;
 
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Size;
@@ -27,8 +29,7 @@ import com.google.mediapipe.glutil.EglManager;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.Map.Entry;
 
 public class StreamActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -93,9 +94,9 @@ public class StreamActivity extends AppCompatActivity {
             onPacketReceived(packet, "right");
         };
         PacketCallback onPoseDataReceived = (packet) -> {
-            if(!landmarkLists.isEmpty()) {
+            //if(!landmarkLists.isEmpty()) {
                 clientSocket.addToQueue(getNetworkFormattedData(landmarkLists));
-            }
+            //}
             landmarkLists.clear();
         };
         processor =
@@ -134,16 +135,24 @@ public class StreamActivity extends AppCompatActivity {
             startCamera();
         }
     }
+
     @Override
     protected void onPause() {
         super.onPause();
         converter.close();
     }
+
     @Override
     public void onRequestPermissionsResult(
-            int requestCode, String[] permissions, int[] grantResults) {
+            int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         PermissionHelper.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        clientSocket.setExitFlag(true);
     }
 
     protected Size computeViewSize(int width, int height) {
@@ -152,16 +161,20 @@ public class StreamActivity extends AppCompatActivity {
 
     protected void onPreviewDisplaySurfaceChanged(
             SurfaceHolder holder, int format, int width, int height) {
-        // (Re-)Compute the ideal size of the camera-preview display (the area that the
-        // camera-preview frames get rendered onto, potentially with scaling and rotation)
-        // based on the size of the SurfaceView that contains the display.
+        /*
+         (Re-)Compute the ideal size of the camera-preview display (the area that the
+         camera-preview frames get rendered onto, potentially with scaling and rotation)
+         based on the size of the SurfaceView that contains the display.
+        */
         Size viewSize = computeViewSize(width, height);
         Size displaySize = cameraHelper.computeDisplaySizeFromViewSize(viewSize);
         boolean isCameraRotated = cameraHelper.isCameraRotated();
 
-        // Connect the converter to the camera-preview frames as its input (via
-        // previewFrameTexture), and configure the output width and height as the computed
-        // display size.
+        /*
+         Connect the converter to the camera-preview frames as its input (via
+         previewFrameTexture), and configure the output width and height as the computed
+         display size.
+        */
         converter.setSurfaceTextureAndAttachToGLContext(
                 previewFrameTexture,
                 isCameraRotated ? displaySize.getHeight() : displaySize.getWidth(),
@@ -200,36 +213,64 @@ public class StreamActivity extends AppCompatActivity {
         // Make the display view visible to start showing the preview. This triggers the
         // SurfaceHolder.Callback added to (the holder of) previewDisplayView.
         previewDisplayView.setVisibility(View.VISIBLE);
-        //previewDisplayView.setVisibility(View.GONE);
     }
 
     private void startCamera() {
         cameraHelper = new CameraXPreviewHelper();
         cameraHelper.setOnCameraStartedListener(
-                surfaceTexture -> {
-                    onCameraStarted(surfaceTexture);
-                });
+                this::onCameraStarted);
         cameraHelper.startCamera(
                 this, CAMERA_FACING, /*unusedSurfaceTexture=*/ null, null);
     }
 
     private String getNetworkFormattedData(HashMap<String, NormalizedLandmarkList> landmarkMap) {
-        if (landmarkMap.isEmpty()) {
-            return "";
-        }
-        String retStr = "";
-        Iterator it = landmarkMap.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry el = (Map.Entry)it.next();
-            //retStr += "\n" + (String)el.getKey() + ": ";
-            for (NormalizedLandmark landmark : ((NormalizedLandmarkList)el.getValue()).getLandmarkList()) {
-                retStr += landmark.getX()
-                        + ", "
-                        + landmark.getY()
-                        + ", "
-                        + landmark.getZ();
+        StringBuilder retStr = new StringBuilder();
+        StringBuilder leftStr = new StringBuilder();
+        StringBuilder rightStr = new StringBuilder();
+
+        int count = 0;
+        NormalizedLandmarkList leftLandmarks = landmarkMap.get("left");
+        NormalizedLandmarkList rightLandmarks = landmarkMap.get("right");
+        if(leftLandmarks == null){
+            for (int i = 0; i < 63; i++) {
+                if ( i > 0 ) {
+                    leftStr.append(", ");
+                }
+                leftStr.append("0.0");
             }
         }
-        return retStr;
+        else {
+            for (NormalizedLandmark landmark : leftLandmarks.getLandmarkList()) {
+                if (count > 0) {
+                    leftStr.append(", ");
+                }
+                leftStr.append(landmark.getX()).append(", ").append(landmark.getY()).append(", ").append(landmark.getZ());
+                count++;
+            }
+        }
+
+        if(rightLandmarks == null){
+            for (int i = 0; i < 63; i++) {
+                if ( i > 0 ) {
+                    rightStr.append(", ");
+                }
+                rightStr.append("0.0");
+            }
+
+        }
+        else {
+            for (NormalizedLandmark landmark : rightLandmarks.getLandmarkList()) {
+                if (count > 0) {
+                    rightStr.append(", ");
+                }
+                rightStr.append(landmark.getX()).append(", ").append(landmark.getY()).append(", ").append(landmark.getZ());
+                count++;
+            }
+        }
+        retStr.append(rightStr);
+        retStr.append(", ");
+        retStr.append(leftStr);
+        return retStr.toString();
     }
+
 }

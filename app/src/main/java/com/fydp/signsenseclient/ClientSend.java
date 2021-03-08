@@ -12,9 +12,10 @@ import java.util.Deque;
 
 public class ClientSend implements Runnable {
     private boolean exitFlag = false;
-    int port = 6071;
+    int sendPort = 9999;
+    int recvPort = 9998;
     InetAddress serverAddr;
-    DatagramSocket udpSocket;
+    DatagramSocket udpSendSocket, updRecvSocket;
     Deque<String> messageQueue = new ArrayDeque<>();
 
     @Override
@@ -34,19 +35,24 @@ public class ClientSend implements Runnable {
     private void init(){
         try {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
-            udpSocket = new DatagramSocket(port);
-            serverAddr = InetAddress.getByName("159.89.120.165");
+            udpSendSocket = new DatagramSocket(sendPort);
+            updRecvSocket = new DatagramSocket(recvPort);
+            serverAddr = InetAddress.getByName("99.199.188.34");
             byte[] buf = ("INIT").getBytes();
-            DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, port);
-            udpSocket.send(packet);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, sendPort);
+            udpSendSocket.send(packet);
 
             byte[] recvBuf = new byte[1024];
             DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
             new Thread(() -> {
                 try {
-                    udpSocket.receive(recvPacket);
-                    String str = new String(recvPacket.getData(), 0, recvPacket.getLength());
-                    Log.d("Networking:", str);
+                    while (true) {
+                        if (exitFlag) break;
+                        updRecvSocket.receive(recvPacket);
+                        String str = new String(recvPacket.getData(), 0, recvPacket.getLength());
+                        Log.d("Networking:", "Receiving Packet!!!");
+                        Log.d("Networking", str);
+                    }
                 }
                 catch (IOException e) {
                     Log.e("Networking:", "IO Error:", e);
@@ -67,12 +73,12 @@ public class ClientSend implements Runnable {
 //            Log.e("Networking", e.getMessage());
 //        }
         byte[] buf = data.getBytes();
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, port);
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, sendPort);
         try {
-            if(udpSocket != null) {
+            if(udpSendSocket != null) {
                 Log.d("Networking", "Sending Packet");
                 Log.d("Networking", data);
-                udpSocket.send(packet);
+                udpSendSocket.send(packet);
             }
         } catch (IOException e) {
             Log.e("Networking:", "IO Error:", e);
