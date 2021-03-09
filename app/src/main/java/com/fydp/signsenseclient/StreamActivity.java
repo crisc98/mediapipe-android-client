@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
+
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmark;
 import com.google.mediapipe.formats.proto.LandmarkProto.NormalizedLandmarkList;
 import com.google.mediapipe.components.CameraHelper;
@@ -82,7 +84,7 @@ public class StreamActivity extends AppCompatActivity {
         AndroidAssetUtil.initializeNativeAssetManager(this);
         eglManager = new EglManager(null);
 
-        clientSocket = new ClientSend();
+        clientSocket = new ClientSend(this);
         new Thread(clientSocket).start();
 
         landmarkLists = new HashMap<>();
@@ -183,6 +185,8 @@ public class StreamActivity extends AppCompatActivity {
         previewDisplayView.setVisibility(View.GONE);
         ViewGroup viewGroup = findViewById(R.id.stream);
         viewGroup.addView(previewDisplayView);
+        View child = getLayoutInflater().inflate(R.layout.prediction_label, null);
+        viewGroup.addView(child);
 
         previewDisplayView
                 .getHolder()
@@ -269,6 +273,11 @@ public class StreamActivity extends AppCompatActivity {
         retStr.append(", ");
         retStr.append(leftStr);
         return retStr.toString();
+    }
+
+    public void setPredictionLabelText(String text) {
+        TextView label = findViewById(R.id.prediction_label);
+        label.setText(text);
     }
 
 }

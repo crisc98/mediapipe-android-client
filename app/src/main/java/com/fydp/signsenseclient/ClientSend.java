@@ -1,5 +1,6 @@
 package com.fydp.signsenseclient;
 
+import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
@@ -12,22 +13,23 @@ import java.util.Deque;
 
 public class ClientSend implements Runnable {
     private boolean exitFlag = false;
-    int sendPort = 9999;
-    int recvPort = 9998;
+    private final int SEND_PORT = 9999;
+    private final int RECV_PORT = 9998;
+    private Context context;
     InetAddress serverAddr;
     DatagramSocket udpSendSocket, updRecvSocket;
     Deque<String> messageQueue = new ArrayDeque<>();
 
+    public ClientSend(Context context){
+        this.context = context;
+    }
+
     @Override
     public void run() {
         init();
-        while(true) {
+        while(!exitFlag) {
             if(!messageQueue.isEmpty()) {
-                if (exitFlag) {
-                    break;
-                } else {
-                    sendData(messageQueue.pop());
-                }
+                sendData(messageQueue.pop());
             }
         }
     }
@@ -35,23 +37,29 @@ public class ClientSend implements Runnable {
     private void init(){
         try {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
-            udpSendSocket = new DatagramSocket(sendPort);
-            updRecvSocket = new DatagramSocket(recvPort);
+            udpSendSocket = new DatagramSocket(SEND_PORT);
+            updRecvSocket = new DatagramSocket(RECV_PORT);
             serverAddr = InetAddress.getByName("99.199.188.34");
             byte[] buf = ("INIT").getBytes();
-            DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, sendPort);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, SEND_PORT);
             udpSendSocket.send(packet);
 
             byte[] recvBuf = new byte[1024];
             DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
             new Thread(() -> {
                 try {
-                    while (true) {
-                        if (exitFlag) break;
+                    while (!exitFlag) {
                         updRecvSocket.receive(recvPacket);
-                        String str = new String(CryptoChaCha20.decrypt(recvPacket.getData()), 0, recvPacket.getLength()-CryptoChaCha20.NONCE_LEN);
+                        String str = new String(CryptoChaCha20.decrypt(recvPacket.getData()), 0, recvPacket.getLength() - CryptoChaCha20.NONCE_LEN);
                         Log.d("Networking:", "Receiving Packet!!!");
                         Log.d("Networking", str);
+                        StreamActivity act = (StreamActivity) context;
+                        act.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                act.setPredictionLabelText(str);
+                            }
+                        });
                     }
                 }
                 catch (IOException e) {
@@ -70,10 +78,10 @@ public class ClientSend implements Runnable {
     private void sendData(String data){
         try {
             byte[] buf = CryptoChaCha20.encrypt(data.getBytes());
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, sendPort);
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, SEND_PORT);
 
             if(udpSendSocket != null) {
-                //Log.d("Networking", "Sending Packet");
+                Log.d("Networking", "Sending Packet");
                 //Log.d("Networking", buf.toString());
                 try {
                     //Log.d("Networking", new String(CryptoChaCha20.decrypt(buf)));
@@ -96,4 +104,5 @@ public class ClientSend implements Runnable {
     public void addToQueue(String data) {
         messageQueue.addLast(data);
     }
+
 }
