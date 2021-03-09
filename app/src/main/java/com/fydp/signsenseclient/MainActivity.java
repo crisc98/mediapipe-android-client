@@ -3,9 +3,13 @@ package com.fydp.signsenseclient;
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+
+import java.util.Arrays;
 
 
 public class MainActivity extends AppCompatActivity {

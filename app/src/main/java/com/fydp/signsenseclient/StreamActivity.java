@@ -29,7 +29,6 @@ import com.google.mediapipe.glutil.EglManager;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.HashMap;
-import java.util.Map.Entry;
 
 public class StreamActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -95,7 +94,7 @@ public class StreamActivity extends AppCompatActivity {
         };
         PacketCallback onPoseDataReceived = (packet) -> {
             //if(!landmarkLists.isEmpty()) {
-                clientSocket.addToQueue(getNetworkFormattedData(landmarkLists));
+            clientSocket.addToQueue(getNetworkFormattedData(landmarkLists));
             //}
             landmarkLists.clear();
         };
@@ -123,7 +122,6 @@ public class StreamActivity extends AppCompatActivity {
             Log.e(TAG, "Failed to get proto.", e);
         }
     }
-
 
     @Override
     protected void onResume() {

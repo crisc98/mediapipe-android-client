@@ -49,13 +49,15 @@ public class ClientSend implements Runnable {
                     while (true) {
                         if (exitFlag) break;
                         updRecvSocket.receive(recvPacket);
-                        String str = new String(recvPacket.getData(), 0, recvPacket.getLength());
+                        String str = new String(CryptoChaCha20.decrypt(recvPacket.getData()), 0, recvPacket.getLength()-CryptoChaCha20.NONCE_LEN);
                         Log.d("Networking:", "Receiving Packet!!!");
                         Log.d("Networking", str);
                     }
                 }
                 catch (IOException e) {
                     Log.e("Networking:", "IO Error:", e);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }).start();
         } catch (SocketException e) {
@@ -66,21 +68,23 @@ public class ClientSend implements Runnable {
     }
 
     private void sendData(String data){
-//        try {
-//            StandardCryptoUtilAES.encrypt(data);
-//        }
-//        catch (Exception e){
-//            Log.e("Networking", e.getMessage());
-//        }
-        byte[] buf = data.getBytes();
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, sendPort);
         try {
+            byte[] buf = CryptoChaCha20.encrypt(data.getBytes());
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, sendPort);
+
             if(udpSendSocket != null) {
-                Log.d("Networking", "Sending Packet");
-                Log.d("Networking", data);
+                //Log.d("Networking", "Sending Packet");
+                //Log.d("Networking", buf.toString());
+                try {
+                    //Log.d("Networking", new String(CryptoChaCha20.decrypt(buf)));
+                }
+                catch (Exception e) {
+                    Log.e("Networking", e.getMessage());
+                }
+
                 udpSendSocket.send(packet);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e("Networking:", "IO Error:", e);
         }
     }
