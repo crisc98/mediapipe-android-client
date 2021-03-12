@@ -42,7 +42,7 @@ public class StreamActivity extends AppCompatActivity {
     private static final String OUTPUT_POSE_LANDMARKS_STREAM_NAME = "pose_landmarks";
     private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.FRONT;
     private HashMap<String, NormalizedLandmarkList> landmarkLists;
-    private ClientSend clientSocket;
+    private ClientNetwork clientSocket;
     // Flips the camera-preview frames vertically before sending them into FrameProcessor to be
     // processed in a MediaPipe graph, and flips the processed frames back when they are displayed.
     // This is needed because OpenGL represents images assuming the image origin is at the bottom-left
@@ -84,7 +84,7 @@ public class StreamActivity extends AppCompatActivity {
         AndroidAssetUtil.initializeNativeAssetManager(this);
         eglManager = new EglManager(null);
 
-        clientSocket = new ClientSend(this);
+        clientSocket = new ClientNetwork(this);
         new Thread(clientSocket).start();
 
         landmarkLists = new HashMap<>();

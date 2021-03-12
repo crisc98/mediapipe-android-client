@@ -11,7 +11,7 @@ import java.net.SocketException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class ClientSend implements Runnable {
+public class ClientNetwork implements Runnable {
     private boolean exitFlag = false;
     private final int SEND_PORT = 9999;
     private final int RECV_PORT = 9998;
@@ -20,7 +20,7 @@ public class ClientSend implements Runnable {
     DatagramSocket udpSendSocket, updRecvSocket;
     Deque<String> messageQueue = new ArrayDeque<>();
 
-    public ClientSend(Context context){
+    public ClientNetwork(Context context){
         this.context = context;
     }
 
@@ -39,7 +39,7 @@ public class ClientSend implements Runnable {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
             udpSendSocket = new DatagramSocket(SEND_PORT);
             updRecvSocket = new DatagramSocket(RECV_PORT);
-            serverAddr = InetAddress.getByName("99.199.188.34");
+            serverAddr = InetAddress.getByName("35.243.169.18");
             byte[] buf = ("INIT").getBytes();
             DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, SEND_PORT);
             udpSendSocket.send(packet);
