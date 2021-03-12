@@ -8,6 +8,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -43,6 +45,7 @@ public class ClientNetwork implements Runnable {
             byte[] buf = ("INIT").getBytes();
             DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, SEND_PORT);
             udpSendSocket.send(packet);
+            final LocalDateTime[] recvTime = {LocalDateTime.now()};
 
             byte[] recvBuf = new byte[1024];
             DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
@@ -50,6 +53,7 @@ public class ClientNetwork implements Runnable {
                 try {
                     while (!exitFlag) {
                         updRecvSocket.receive(recvPacket);
+                        LocalDateTime newRecvTime = LocalDateTime.now();
                         String str = new String(CryptoChaCha20.decrypt(recvPacket.getData()), 0, recvPacket.getLength() - CryptoChaCha20.NONCE_LEN);
                         Log.d("Networking:", "Receiving Packet!!!");
                         Log.d("Networking", str);
@@ -57,7 +61,9 @@ public class ClientNetwork implements Runnable {
                         act.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                act.setPredictionLabelText(str);
+                                boolean clear = Duration.between(recvTime[0], newRecvTime).getSeconds() > 5;
+                                recvTime[0] = newRecvTime;
+                                act.addToLabelBuffer(str, clear);
                             }
                         });
                     }

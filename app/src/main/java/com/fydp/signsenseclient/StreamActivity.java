@@ -30,6 +30,7 @@ import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.glutil.EglManager;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class StreamActivity extends AppCompatActivity {
@@ -41,6 +42,7 @@ public class StreamActivity extends AppCompatActivity {
     private static final String OUTPUT_RHAND_LANDMARKS_STREAM_NAME = "right_hand_landmarks";
     private static final String OUTPUT_POSE_LANDMARKS_STREAM_NAME = "pose_landmarks";
     private static final CameraHelper.CameraFacing CAMERA_FACING = CameraHelper.CameraFacing.FRONT;
+    private static final int MAX_LABEL_LENGTH = 15;
     private HashMap<String, NormalizedLandmarkList> landmarkLists;
     private ClientNetwork clientSocket;
     // Flips the camera-preview frames vertically before sending them into FrameProcessor to be
@@ -275,9 +277,26 @@ public class StreamActivity extends AppCompatActivity {
         return retStr.toString();
     }
 
-    public void setPredictionLabelText(String text) {
+    public void addToLabelBuffer(String text, boolean clear) {
         TextView label = findViewById(R.id.prediction_label);
-        label.setText(text);
+        String currText = label.getText().toString();
+        String[] words = currText.split(" ");
+        String lastWord = words[words.length-1];
+        if (lastWord.equals(text)) {
+            return;
+        }
+        if(text.length() > MAX_LABEL_LENGTH || clear) {
+            label.setText(text);
+            return;
+        }
+        else {
+            while (currText.length() + text.length() > MAX_LABEL_LENGTH) {
+                //Strip first word
+                currText = (currText.split(" ", 2))[1];
+            }
+        }
+        label.setText(currText + " " + text);
+
     }
 
 }
