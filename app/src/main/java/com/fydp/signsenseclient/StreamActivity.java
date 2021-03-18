@@ -142,7 +142,9 @@ public class StreamActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         converter.close();
-        this.finishAffinity();
+        clientSocket.setExitFlag(true);
+        this.finishAndRemoveTask();
+        System.exit(0);
     }
 
     @Override
