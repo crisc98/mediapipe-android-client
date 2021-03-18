@@ -90,7 +90,7 @@ public class ClientNetwork implements Runnable {
                 Log.d("Networking", "Sending Packet");
                 //Log.d("Networking", buf.toString());
                 try {
-                    //Log.d("Networking", new String(CryptoChaCha20.decrypt(buf)));
+                    Log.d("Networking", new String(CryptoChaCha20.decrypt(buf)));
                 }
                 catch (Exception e) {
                     Log.e("Networking", e.getMessage());

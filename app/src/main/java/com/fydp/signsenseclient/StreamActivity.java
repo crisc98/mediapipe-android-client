@@ -142,6 +142,7 @@ public class StreamActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         converter.close();
+        this.finishAffinity();
     }
 
     @Override
@@ -244,6 +245,7 @@ public class StreamActivity extends AppCompatActivity {
             }
         }
         else {
+            count = 0;
             for (NormalizedLandmark landmark : leftLandmarks.getLandmarkList()) {
                 if (count > 0) {
                     leftStr.append(", ");
@@ -263,6 +265,7 @@ public class StreamActivity extends AppCompatActivity {
 
         }
         else {
+            count = 0;
             for (NormalizedLandmark landmark : rightLandmarks.getLandmarkList()) {
                 if (count > 0) {
                     rightStr.append(", ");
