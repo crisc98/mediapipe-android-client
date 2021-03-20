@@ -6,4 +6,5 @@
     android:layout_height="match_parent"
     android:id="@+id/stream"
     android:background="#000">
+
 </RelativeLayout>

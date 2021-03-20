@@ -5,6 +5,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.util.Size;
 import android.view.SurfaceHolder;
@@ -30,7 +32,6 @@ import com.google.mediapipe.framework.ProtoUtil;
 import com.google.mediapipe.glutil.EglManager;
 import com.google.protobuf.InvalidProtocolBufferException;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class StreamActivity extends AppCompatActivity {
@@ -69,6 +70,8 @@ public class StreamActivity extends AppCompatActivity {
     private ExternalTextureConverter converter;
     // Handles camera access via the {@link CameraX} Jetpack support library.
     private CameraXPreviewHelper cameraHelper;
+
+    private CountDownTimer timer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -190,8 +193,9 @@ public class StreamActivity extends AppCompatActivity {
         previewDisplayView.setVisibility(View.GONE);
         ViewGroup viewGroup = findViewById(R.id.stream);
         viewGroup.addView(previewDisplayView);
-        View child = getLayoutInflater().inflate(R.layout.prediction_label, null);
+        View child = getLayoutInflater().inflate(R.layout.camera_overlay, null);
         viewGroup.addView(child);
+        initTimer();
 
         previewDisplayView
                 .getHolder()
@@ -290,8 +294,14 @@ public class StreamActivity extends AppCompatActivity {
         if (lastWord.equals(text)) {
             return;
         }
-        if(text.length() > MAX_LABEL_LENGTH || clear) {
+        if(clear) {
+            label.setText("");
+            return;
+        }
+        if(text.length() > MAX_LABEL_LENGTH) {
             label.setText(text);
+            timer.cancel();
+            timer.start();
             return;
         }
         else {
@@ -301,7 +311,31 @@ public class StreamActivity extends AppCompatActivity {
             }
         }
         label.setText(currText + " " + text);
+        timer.cancel();
+        timer.start();
 
+    }
+
+    public void initTimer() {
+        long totalSeconds = 30;
+        long intervalSeconds = 1;
+        int timeout = 6;
+        TextView timerView = findViewById(R.id.timer);
+
+        timer = new CountDownTimer(totalSeconds * 1000, intervalSeconds * 1000) {
+            public void onTick(long millisUntilFinished) {
+                int time = (int)(totalSeconds * 1000 - millisUntilFinished) / 1000;
+                //If it has been 5 or more seconds since we received a prediction, clear the label buffer
+                if (time > timeout) {
+                    addToLabelBuffer("", true);
+                }
+                timerView.setText("" + time);
+            }
+
+            public void onFinish() {
+                Log.d(TAG, "Time's up!");
+            }
+        };
     }
 
 }

@@ -8,7 +8,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -16,10 +15,9 @@ import java.util.Deque;
 public class ClientNetwork implements Runnable {
     private boolean exitFlag = false;
     private final int SEND_PORT = 9999;
-    private final int RECV_PORT = 9998;
     private Context context;
     InetAddress serverAddr;
-    DatagramSocket udpSendSocket, updRecvSocket;
+    DatagramSocket udpSocket;
     Deque<String> messageQueue = new ArrayDeque<>();
 
     public ClientNetwork(Context context){
@@ -39,12 +37,11 @@ public class ClientNetwork implements Runnable {
     private void init(){
         try {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
-            udpSendSocket = new DatagramSocket(SEND_PORT);
-            updRecvSocket = new DatagramSocket(RECV_PORT);
+            udpSocket = new DatagramSocket(SEND_PORT);
             serverAddr = InetAddress.getByName("35.243.169.18");
             byte[] buf = ("INIT").getBytes();
             DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, SEND_PORT);
-            udpSendSocket.send(packet);
+            udpSocket.send(packet);
             final LocalDateTime[] recvTime = {LocalDateTime.now()};
 
             byte[] recvBuf = new byte[1024];
@@ -52,8 +49,7 @@ public class ClientNetwork implements Runnable {
             new Thread(() -> {
                 try {
                     while (!exitFlag) {
-                        updRecvSocket.receive(recvPacket);
-                        LocalDateTime newRecvTime = LocalDateTime.now();
+                        udpSocket.receive(recvPacket);
                         String str = new String(CryptoChaCha20.decrypt(recvPacket.getData()), 0, recvPacket.getLength() - CryptoChaCha20.NONCE_LEN);
                         Log.d("Networking:", "Receiving Packet!!!");
                         Log.d("Networking", str);
@@ -61,9 +57,7 @@ public class ClientNetwork implements Runnable {
                         act.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                boolean clear = Duration.between(recvTime[0], newRecvTime).getSeconds() > 5;
-                                recvTime[0] = newRecvTime;
-                                act.addToLabelBuffer(str, clear);
+                                act.addToLabelBuffer(str, false);
                             }
                         });
                     }
@@ -86,17 +80,17 @@ public class ClientNetwork implements Runnable {
             byte[] buf = CryptoChaCha20.encrypt(data.getBytes());
             DatagramPacket packet = new DatagramPacket(buf, buf.length, serverAddr, SEND_PORT);
 
-            if(udpSendSocket != null) {
+            if(udpSocket != null) {
                 Log.d("Networking", "Sending Packet");
                 //Log.d("Networking", buf.toString());
                 try {
-                    Log.d("Networking", new String(CryptoChaCha20.decrypt(buf)));
+                    //Log.d("Networking", new String(CryptoChaCha20.decrypt(buf)));
                 }
                 catch (Exception e) {
                     Log.e("Networking", e.getMessage());
                 }
 
-                udpSendSocket.send(packet);
+                udpSocket.send(packet);
             }
         } catch (Exception e) {
             Log.e("Networking:", "IO Error:", e);
