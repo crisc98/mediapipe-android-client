@@ -39,11 +39,6 @@ public class ClientNetwork implements Runnable {
             Log.d("Networking","OPENING SOCKET!!!!!!!!");
             udpSocket = new DatagramSocket(SEND_PORT);
             serverAddr = InetAddress.getByName("35.243.169.18");
-            byte[] buf = ("INIT").getBytes();
-            DatagramPacket packet = new DatagramPacket(buf, buf.length,serverAddr, SEND_PORT);
-            udpSocket.send(packet);
-            final LocalDateTime[] recvTime = {LocalDateTime.now()};
-
             byte[] recvBuf = new byte[1024];
             DatagramPacket recvPacket = new DatagramPacket(recvBuf, recvBuf.length);
             new Thread(() -> {
@@ -52,12 +47,16 @@ public class ClientNetwork implements Runnable {
                         udpSocket.receive(recvPacket);
                         String str = new String(CryptoChaCha20.decrypt(recvPacket.getData()), 0, recvPacket.getLength() - CryptoChaCha20.NONCE_LEN);
                         Log.d("Networking:", "Receiving Packet!!!");
-                        Log.d("Networking", str);
+                        //Log.d("Networking", str);
                         StreamActivity act = (StreamActivity) context;
+                        if(!act.serverStatus){
+                            sendData("ACK");
+                        }
                         act.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 act.addToLabelBuffer(str, false);
+                                act.setServerAvailable(true);
                             }
                         });
                     }
@@ -105,4 +104,8 @@ public class ClientNetwork implements Runnable {
         messageQueue.addLast(data);
     }
 
+    public void close(){
+        messageQueue.clear();
+        addToQueue("END");
+    }
 }

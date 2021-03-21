@@ -71,6 +71,8 @@ public class StreamActivity extends AppCompatActivity {
     // Handles camera access via the {@link CameraX} Jetpack support library.
     private CameraXPreviewHelper cameraHelper;
 
+    public boolean serverStatus;
+
     private CountDownTimer timer;
 
     @Override
@@ -145,7 +147,7 @@ public class StreamActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         converter.close();
-        clientSocket.setExitFlag(true);
+        clientSocket.close();
         this.finishAndRemoveTask();
         System.exit(0);
     }
@@ -160,7 +162,7 @@ public class StreamActivity extends AppCompatActivity {
     @Override
     protected void onDestroy(){
         super.onDestroy();
-        clientSocket.setExitFlag(true);
+        clientSocket.close();
     }
 
     protected Size computeViewSize(int width, int height) {
@@ -319,7 +321,7 @@ public class StreamActivity extends AppCompatActivity {
     public void initTimer() {
         long totalSeconds = 30;
         long intervalSeconds = 1;
-        int timeout = 6;
+        int timeout = 10;
         TextView timerView = findViewById(R.id.timer);
 
         timer = new CountDownTimer(totalSeconds * 1000, intervalSeconds * 1000) {
@@ -336,6 +338,15 @@ public class StreamActivity extends AppCompatActivity {
                 Log.d(TAG, "Time's up!");
             }
         };
+    }
+
+    public void setServerAvailable(boolean status) {
+        if(status != serverStatus) {
+            TextView statusView = findViewById(R.id.server_status);
+            String text = status ? "Ready" : "Connecting...";
+            statusView.setText(text);
+            serverStatus = status;
+        }
     }
 
 }
