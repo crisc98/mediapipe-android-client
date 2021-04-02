@@ -23,6 +23,7 @@
         android:fontFamily="@font/adventpro_bold"
         android:textColor="@color/colorPrimaryDark"
         android:textSize="60sp"
+        android:visibility="invisible"
         />
     <TextView
         android:id="@+id/server_status"

@@ -1,5 +1,6 @@
 package com.fydp.signsenseclient;
 
+import android.graphics.Color;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 
@@ -290,6 +291,9 @@ public class StreamActivity extends AppCompatActivity {
 
     public void addToLabelBuffer(String text, boolean clear) {
         TextView label = findViewById(R.id.prediction_label);
+        if(text.equals("None")){
+            return;
+        }
         String currText = label.getText().toString();
         String[] words = currText.split(" ");
         String lastWord = words[words.length-1];
@@ -343,10 +347,14 @@ public class StreamActivity extends AppCompatActivity {
     public void setServerAvailable(boolean status) {
         if(status != serverStatus) {
             TextView statusView = findViewById(R.id.server_status);
-            String text = status ? "Ready" : "Connecting...";
+            String text = status ? "Online" : "Connecting...";
             statusView.setText(text);
             serverStatus = status;
+            if(status){
+                statusView.setTextColor(Color.GREEN);
+            }
         }
+
     }
 
 }
